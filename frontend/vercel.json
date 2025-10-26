@@ -19,5 +19,10 @@
     "VITE_API_URL": "https://chat-website-backend.onrender.com/api",
     "VITE_SOCKET_URL": "https://chat-website-backend.onrender.com",
     "VITE_NODE_ENV": "production"
+  },
+  "functions": {
+    "app/api/**/*.js": {
+      "maxDuration": 30
+    }
   }
 }
