@@ -1,0 +1,41 @@
+{
+  "name": "chat-website-backend",
+  "version": "1.0.0",
+  "description": "Backend API server for chat website",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "build": "echo 'No build step required for Node.js'",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch --runInBand"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.3",
+    "redis": "^4.6.11",
+    "socket.io": "^4.7.4",
+    "validator": "^13.15.15"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^6.3.3"
+  },
+  "keywords": [
+    "express",
+    "socket.io",
+    "jwt",
+    "mongodb",
+    "api"
+  ],
+  "author": "",
+  "license": "MIT"
+}
