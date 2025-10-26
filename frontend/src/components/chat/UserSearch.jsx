@@ -174,13 +174,14 @@ const UserSearch = ({ onUserSelect }) => {
 
   const handleUserClick = async (user) => {
     try {
-      // Create or get existing chat with this user
-      const response = await api.get(`/chats/${user.uniqueUserId}`);
+      // Create or get existing chat with this user using MongoDB ObjectId
+      const response = await api.get(`/chats/with/${user._id}`);
       
       if (response.data.success) {
-        onUserSelect(user, response.data.chatId);
+        onUserSelect(user, response.data.chat._id);
       }
     } catch (err) {
+      console.error('Chat creation error:', err);
       setError('Failed to start chat. Please try again.');
     }
   };
