@@ -23,13 +23,13 @@ function App() {
       <Router>
         <NotificationProvider>
           <AuthProvider>
-            <GlobalErrorHandler />
-            <SessionManager>
-              <div className="app">
-                <NetworkStatus />
-                <NotificationContainer />
-                
-                <SocketProvider>
+            <SocketProvider>
+              <GlobalErrorHandler />
+              <SessionManager>
+                <div className="app">
+                  <NotificationContainer />
+                  <NetworkStatus />
+                  
                   <Routes>
                     {/* Public routes - only accessible when not authenticated */}
                     <Route 
@@ -68,9 +68,9 @@ function App() {
                     {/* 404 page */}
                     <Route path="*" element={<NotFoundPage />} />
                   </Routes>
-                </SocketProvider>
-              </div>
-            </SessionManager>
+                </div>
+              </SessionManager>
+            </SocketProvider>
           </AuthProvider>
         </NotificationProvider>
       </Router>

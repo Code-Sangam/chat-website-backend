@@ -908,7 +908,7 @@ Before going live:
 **Total: $0/month**
 
 **Potential Upgrade Costs (when you outgrow free tiers):**
-- Render Pro: $7/month (for more resources and no sleeping)
+- Render Pro: $7/month (for more resources and no
 - MongoDB Atlas M10: $9/month
 - Redis Labs: $5/month
 - Custom domain: $10-15/year

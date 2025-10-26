@@ -79,7 +79,23 @@ const socketReducer = (state, action) => {
           [action.payload.userId]: {
             isOnline: action.payload.isOnline,
             timestamp: action.payload.timestamp
-          }
+          },
+          // Also store by uniqueUserId for compatibility
+          ...(action.payload.uniqueUserId && {
+            [action.payload.uniqueUserId]: {
+              isOnline: action.payload.isOnline,
+              timestamp: action.payload.timestamp
+            }
+          })
+        }
+      };
+    
+    case 'USER_STATUSES_RECEIVED':
+      return {
+        ...state,
+        userStatuses: {
+          ...state.userStatuses,
+          ...action.payload
         }
       };
     
@@ -205,6 +221,13 @@ export const SocketProvider = ({ children }) => {
     socketRef.current.on('user_status_changed', (data) => {
       dispatch({ 
         type: 'USER_STATUS_CHANGED', 
+        payload: data 
+      });
+    });
+
+    socketRef.current.on('user_statuses', (data) => {
+      dispatch({ 
+        type: 'USER_STATUSES_RECEIVED', 
         payload: data 
       });
     });

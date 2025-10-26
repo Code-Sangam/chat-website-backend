@@ -19,6 +19,42 @@ const Header = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+`;
+
+const BackButton = styled.button`
+  display: none;
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  margin-right: 12px;
+  
+  &:hover {
+    background-color: #e3f2fd;
+  }
+  
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  @media (max-width: 768px) {
+    display: ${props => props.show ? 'flex' : 'none'};
+    align-items: center;
+    justify-content: center;
+  }
+`;
+
+const HeaderContent = styled.div`
+  display: flex;
+  align-items: center;
+  flex: 1;
 `;
 
 const UserInfo = styled.div`
@@ -128,7 +164,7 @@ const ErrorMessage = styled.div`
   text-align: center;
 `;
 
-const ChatWindow = ({ selectedUser, chatId }) => {
+const ChatWindow = ({ selectedUser, chatId, onBackClick, showBackButton }) => {
   const { 
     userStatuses,
     getUserStatus,
@@ -165,16 +201,23 @@ const ChatWindow = ({ selectedUser, chatId }) => {
   return (
     <WindowContainer>
       <Header>
-        <UserInfo>
-          <Username>{selectedUser.username}</Username>
-          <UserId>ID: {selectedUser.uniqueUserId}</UserId>
-          {connected && (
-            <OnlineStatus isOnline={userStatuses[selectedUser.uniqueUserId]?.isOnline}>
-              <StatusDot isOnline={userStatuses[selectedUser.uniqueUserId]?.isOnline} />
-              {userStatuses[selectedUser.uniqueUserId]?.isOnline ? 'Online' : 'Offline'}
-            </OnlineStatus>
-          )}
-        </UserInfo>
+        <HeaderContent>
+          <BackButton show={showBackButton} onClick={onBackClick}>
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+            </svg>
+          </BackButton>
+          <UserInfo>
+            <Username>{selectedUser.username}</Username>
+            <UserId>ID: {selectedUser.uniqueUserId}</UserId>
+            {connected && (
+              <OnlineStatus isOnline={userStatuses[selectedUser.uniqueUserId]?.isOnline}>
+                <StatusDot isOnline={userStatuses[selectedUser.uniqueUserId]?.isOnline} />
+                {userStatuses[selectedUser.uniqueUserId]?.isOnline ? 'Online' : 'Offline'}
+              </OnlineStatus>
+            )}
+          </UserInfo>
+        </HeaderContent>
       </Header>
       
       <MessagesContainer>

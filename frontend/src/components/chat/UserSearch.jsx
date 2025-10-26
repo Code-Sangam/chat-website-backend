@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useSocket } from '../../contexts/SocketContext';
+import UserStatus from './UserStatus';
 import api from '../../services/api';
 
 const SearchContainer = styled.div`
@@ -16,6 +17,8 @@ const SearchInput = styled.input`
   margin-bottom: 16px;
   outline: none;
   transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
 
   &:focus {
     border-color: #007bff;
@@ -24,6 +27,11 @@ const SearchInput = styled.input`
 
   &::placeholder {
     color: #6c757d;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 14px;
+    font-size: 16px; /* Prevents zoom on iOS */
   }
 `;
 
@@ -79,20 +87,8 @@ const UserId = styled.div`
   color: #6c757d;
 `;
 
-const UserStatus = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: ${props => props.isOnline ? '#28a745' : '#6c757d'};
-  margin-top: 2px;
-`;
-
-const StatusDot = styled.div`
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: ${props => props.isOnline ? '#28a745' : '#6c757d'};
+const UserStatusContainer = styled.div`
+  margin-top: 4px;
 `;
 
 const Message = styled.div`
@@ -131,7 +127,15 @@ const UserSearch = ({ onUserSelect }) => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   
-  const { connected, userStatuses } = useSocket();
+  const { connected, userStatuses, getUserStatus } = useSocket();
+
+  // Request status for search results when they change
+  useEffect(() => {
+    if (searchResults.length > 0 && connected) {
+      const userIds = searchResults.map(user => user._id);
+      getUserStatus(userIds);
+    }
+  }, [searchResults, connected, getUserStatus]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -212,7 +216,7 @@ const UserSearch = ({ onUserSelect }) => {
 
       <ResultsContainer>
         {searchResults.map((user) => {
-          const isOnline = connected && userStatuses[user.uniqueUserId]?.isOnline;
+          const userStatus = userStatuses[user._id] || { isOnline: false };
           
           return (
             <UserResult 
@@ -222,10 +226,13 @@ const UserSearch = ({ onUserSelect }) => {
               <Username>{user.username}</Username>
               <UserId>ID: {user.uniqueUserId}</UserId>
               {connected && (
-                <UserStatus isOnline={isOnline}>
-                  <StatusDot isOnline={isOnline} />
-                  {isOnline ? 'Online' : 'Offline'}
-                </UserStatus>
+                <UserStatusContainer>
+                  <UserStatus 
+                    isOnline={userStatus.isOnline} 
+                    lastSeen={userStatus.lastActive || user.lastActive}
+                    showText={true}
+                  />
+                </UserStatusContainer>
               )}
             </UserResult>
           );

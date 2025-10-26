@@ -49,27 +49,19 @@ const searchUsers = async (req, res) => {
         return res.json({
           success: true,
           message: 'Search completed',
-          data: {
-            users: [],
-            searchTerm,
-            resultCount: 0
-          }
+          user: null
         });
       }
 
       return res.json({
         success: true,
         message: 'User found',
-        data: {
-          users: [{
-            id: exactMatch._id,
-            uniqueUserId: exactMatch.uniqueUserId,
-            username: exactMatch.username,
-            isOnline: exactMatch.isOnline,
-            lastActive: exactMatch.lastActive
-          }],
-          searchTerm,
-          resultCount: 1
+        user: {
+          _id: exactMatch._id,
+          uniqueUserId: exactMatch.uniqueUserId,
+          username: exactMatch.username,
+          isOnline: exactMatch.isOnline,
+          lastActive: exactMatch.lastActive
         }
       });
     }
@@ -108,11 +100,7 @@ const searchUsers = async (req, res) => {
     return res.json({
       success: true,
       message: 'No users found',
-      data: {
-        users: [],
-        searchTerm,
-        resultCount: 0
-      }
+      user: null
     });
 
   } catch (error) {

@@ -39,18 +39,20 @@ class SocketService {
 
       console.log(`User connected: ${user.username} (${userId})`);
 
-      // Store user connection
+      // Store user connection using both MongoDB ID and uniqueUserId for compatibility
       this.connectedUsers.set(userId, socket.id);
-      this.userSockets.set(socket.id, userId);
+      this.connectedUsers.set(user.uniqueUserId, socket.id);
+      this.userSockets.set(socket.id, { userId, uniqueUserId: user.uniqueUserId });
 
       // Update user online status
       await user.setOnlineStatus(true);
 
       // Join user to their personal room
       socket.join(`user_${userId}`);
+      socket.join(`user_${user.uniqueUserId}`);
 
       // Emit user online status to their contacts
-      this.broadcastUserStatus(userId, true);
+      this.broadcastUserStatus(userId, user.uniqueUserId, true);
 
       // Handle chat events
       this.setupChatHandlers(socket);
@@ -208,8 +210,19 @@ class SocketService {
         const statuses = {};
 
         for (const targetUserId of userIds) {
-          const isOnline = this.connectedUsers.has(targetUserId);
-          const user = await User.findById(targetUserId);
+          // Check if it's a MongoDB ObjectId or uniqueUserId
+          let user;
+          let isOnline = false;
+          
+          if (targetUserId.length === 24) {
+            // MongoDB ObjectId
+            user = await User.findById(targetUserId);
+            isOnline = this.connectedUsers.has(targetUserId);
+          } else {
+            // uniqueUserId
+            user = await User.findByUniqueId(targetUserId);
+            isOnline = this.connectedUsers.has(targetUserId);
+          }
           
           statuses[targetUserId] = {
             isOnline,
@@ -227,13 +240,15 @@ class SocketService {
 
   async handleDisconnection(socket) {
     try {
-      const userId = this.userSockets.get(socket.id);
+      const userInfo = this.userSockets.get(socket.id);
       
-      if (userId) {
-        console.log(`User disconnected: ${userId}`);
+      if (userInfo) {
+        const { userId, uniqueUserId } = userInfo;
+        console.log(`User disconnected: ${userId} (${uniqueUserId})`);
 
         // Remove from connected users
         this.connectedUsers.delete(userId);
+        this.connectedUsers.delete(uniqueUserId);
         this.userSockets.delete(socket.id);
 
         // Update user offline status
@@ -243,7 +258,7 @@ class SocketService {
         }
 
         // Broadcast user offline status
-        this.broadcastUserStatus(userId, false);
+        this.broadcastUserStatus(userId, uniqueUserId, false);
       }
 
     } catch (error) {
@@ -252,7 +267,7 @@ class SocketService {
   }
 
   // Broadcast user online/offline status to their contacts
-  async broadcastUserStatus(userId, isOnline) {
+  async broadcastUserStatus(userId, uniqueUserId, isOnline) {
     try {
       // Skip socket operations if not initialized (e.g., in test environment)
       if (!this.io) {
@@ -263,7 +278,7 @@ class SocketService {
       const userChats = await Chat.find({
         participants: userId,
         isActive: true
-      }).populate('participants', '_id');
+      }).populate('participants', '_id uniqueUserId');
 
       // Get all other participants (contacts)
       const contacts = new Set();
@@ -275,12 +290,13 @@ class SocketService {
         });
       });
 
-      // Emit status update to online contacts
+      // Emit status update to online contacts with both IDs for compatibility
       contacts.forEach(contactId => {
         const contactSocketId = this.connectedUsers.get(contactId);
         if (contactSocketId) {
           this.io.to(contactSocketId).emit('user_status_changed', {
             userId,
+            uniqueUserId,
             isOnline,
             timestamp: new Date()
           });
@@ -292,7 +308,7 @@ class SocketService {
     }
   }
 
-  // Send message to specific user
+  // Send message to specific user (accepts both MongoDB ID and uniqueUserId)
   sendToUser(userId, event, data) {
     // Skip socket operations if not initialized (e.g., in test environment)
     if (!this.io) {
@@ -336,7 +352,7 @@ class SocketService {
     return Array.from(this.connectedUsers.keys());
   }
 
-  // Check if user is online
+  // Check if user is online (accepts both MongoDB ID and uniqueUserId)
   isUserOnline(userId) {
     return this.connectedUsers.has(userId);
   }
