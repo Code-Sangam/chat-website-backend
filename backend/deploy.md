@@ -8,7 +8,8 @@
 ```
 Name: chat-website-backend
 Environment: Node
-Build Command: npm ci --only=production && npm rebuild bcrypt --build-from-source
+Root Directory: backend
+Build Command: npm install --production && npm rebuild bcrypt --build-from-source
 Start Command: npm start
 Plan: Free
 ```

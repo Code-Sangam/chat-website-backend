@@ -2,12 +2,19 @@ services:
   - type: web
     name: chat-website-backend
     env: node
-    buildCommand: npm ci --only=production && npm rebuild bcrypt --build-from-source
-    startCommand: npm start
+    rootDir: backend
+    buildCommand: cd backend && npm install --production && npm rebuild bcrypt --build-from-source
+    startCommand: cd backend && npm start
     plan: free
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
+      - key: MONGODB_URI
+        value: mongodb+srv://chatwebsite:chatwebsite123@cluster0.mongodb.net/chat-website?retryWrites=true&w=majority
+      - key: JWT_SECRET
+        value: super-secure-jwt-secret-key-for-production-2024
+      - key: FRONTEND_URL
+        value: https://chat-website-frontend-dyq118mx8-manualuser206-8672s-projects.vercel.app
     healthCheckPath: /health
