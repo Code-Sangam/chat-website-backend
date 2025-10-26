@@ -46,7 +46,7 @@ This guide provides step-by-step instructions for deploying the Chat Website app
 
 **Best Free Combination:**
 - **Frontend:** Vercel (React app)
-- **Backend:** Railway (Node.js API)
+- **Backend:** Render (Node.js API)
 - **Database:** MongoDB Atlas (free tier)
 - **Redis:** Redis Labs (free tier)
 - **Domain:** Freenom (free domain) or use provided subdomains
@@ -54,12 +54,12 @@ This guide provides step-by-step instructions for deploying the Chat Website app
 **Total Cost:** $0/month
 **Setup Time:** 30-45 minutes
 
-## Option 1: Vercel + Railway
+## Option 1: Vercel + Render
 
 ### Prerequisites
 - GitHub account
 - Vercel account
-- Railway account
+- Render account
 - MongoDB Atlas account
 
 ### Step 1: Setup MongoDB Atlas (Free Database)
@@ -123,65 +123,83 @@ This guide provides step-by-step instructions for deploying the Chat Website app
 # Password: [your-password]
 ```
 
-### Step 3: Deploy Backend to Railway
+### Step 3: Deploy Backend to Render
 
-1. **Prepare Backend for Railway:**
+1. **Prepare Backend for Render:**
 
-Create `backend/railway.json`:
-```json
-{
-  "$schema": "https://railway.app/railway.schema.json",
-  "build": {
-    "builder": "NIXPACKS"
-  },
-  "deploy": {
-    "startCommand": "npm start",
-    "healthcheckPath": "/health",
-    "healthcheckTimeout": 100,
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
-  }
-}
-```
-
-Create `backend/package.json` start script:
+Ensure your `backend/package.json` has the correct scripts:
 ```json
 {
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "build": "echo 'No build step required for Node.js'"
   }
 }
 ```
 
-2. **Deploy to Railway:**
-```bash
-# Install Railway CLI
-npm install -g @railway/cli
-
-# Login to Railway
-railway login
-
-# Initialize project
-cd backend
-railway init
-
-# Set environment variables
-railway variables set NODE_ENV=production
-railway variables set PORT=3000
-railway variables set MONGODB_URI="mongodb+srv://chatapp:nikhilrao@chat-website-cluster.pr5u55h.mongodb.net/?appName=chat-website-cluster"
-railway variables set REDIS_URL="redis://:NKPK#rao6704@http://redis-18517.crce206.ap-south-1-1.ec2.redns.redis-cloud.com:18517"
-railway variables set JWT_SECRET="your-super-secure-jwt-secret-32-characters-long"
-railway variables set FRONTEND_URL="https://your-app.vercel.app"
-
-# Deploy
-railway up
+Create `backend/render.yaml` (optional, for advanced configuration):
+```yaml
+services:
+  - type: web
+    name: chat-website-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
 ```
 
-3. **Get Backend URL:**
+2. **Deploy to Render:**
+
+**Method A: Via GitHub (Recommended)**
 ```bash
-# Railway will provide a URL like:
-# https://your-backend-production.up.railway.app
+# Push your backend code to GitHub
+cd backend
+git init
+git add .
+git commit -m "Backend for Render deployment"
+git remote add origin https://github.com/YOUR_USERNAME/chat-website-backend.git
+git push -u origin main
+```
+
+Then:
+1. Go to https://render.com
+2. Sign up with GitHub
+3. Click **"New +"** → **"Web Service"**
+4. Connect your `chat-website-backend` repository
+5. Configure:
+   - **Name:** `chat-website-backend`
+   - **Environment:** `Node`
+   - **Build Command:** `npm install`
+   - **Start Command:** `npm start`
+   - **Instance Type:** `Free`
+
+**Method B: Direct Upload**
+1. Go to https://render.com/dashboard
+2. Click **"New +"** → **"Web Service"**
+3. Choose **"Build and deploy from a Git repository"**
+4. Upload your code or connect GitHub
+
+3. **Set Environment Variables in Render:**
+
+In the Render dashboard, go to **Environment Variables** and add:
+```bash
+NODE_ENV=production
+PORT=10000
+MONGODB_URI=mongodb+srv://chatapp:YOUR_PASSWORD@chat-website-cluster.xxxxx.mongodb.net/chat-website?retryWrites=true&w=majority
+REDIS_URL=redis://:YOUR_PASSWORD@redis-xxxxx.c1.us-east-1-1.ec2.cloud.redislabs.com:12345
+JWT_SECRET=your-super-secure-jwt-secret-32-characters-long
+FRONTEND_URL=https://your-app.vercel.app
+```
+
+4. **Get Backend URL:**
+```bash
+# Render will provide a URL like:
+# https://chat-website-backend.onrender.com
 ```
 
 ### Step 4: Deploy Frontend to Vercel
@@ -190,8 +208,8 @@ railway up
 
 Create `frontend/.env.production`:
 ```env
-VITE_API_URL=https://your-backend-production.up.railway.app/api
-VITE_SOCKET_URL=https://your-backend-production.up.railway.app
+VITE_API_URL=https://chat-website-backend.onrender.com/api
+VITE_SOCKET_URL=https://chat-website-backend.onrender.com
 ```
 
 2. **Deploy to Vercel:**
@@ -251,8 +269,10 @@ app.use(cors({
 
 Redeploy backend:
 ```bash
-cd backend
-railway up
+# Render will automatically redeploy when you push to GitHub
+git add .
+git commit -m "Update CORS settings"
+git push origin main
 ```
 
 ## Option 2: Netlify + Render
@@ -270,9 +290,9 @@ Follow MongoDB Atlas and Redis Labs setup from Option 1.
 
 2. **Create Web Service:**
 ```bash
-# Dashboard > New > Web Service
+# Dashboard > New + > Web Service
 # Connect GitHub repository
-# Select backend folder or create separate repo
+# Select your chat-website-backend repository
 ```
 
 3. **Configure Service:**
@@ -287,11 +307,11 @@ Follow MongoDB Atlas and Redis Labs setup from Option 1.
 4. **Add Environment Variables:**
 ```bash
 NODE_ENV=production
+PORT=10000
 MONGODB_URI=mongodb+srv://chatapp:password@chat-website-cluster.xxxxx.mongodb.net/chat-website
 REDIS_URL=redis://:password@redis-xxxxx.c1.us-east-1-1.ec2.cloud.redislabs.com:12345
 JWT_SECRET=your-super-secure-jwt-secret-32-characters-long
 FRONTEND_URL=https://your-app.netlify.app
-PORT=10000
 ```
 
 ### Step 3: Deploy Frontend to Netlify
@@ -620,15 +640,12 @@ checkHealth();
 - 100GB-hours serverless function execution
 - No custom server-side logic
 
-**Railway:**
-- $5 credit/month (usually enough for small apps)
-- Apps sleep after 30 minutes of inactivity
-- 500MB memory limit
-
 **Render:**
 - 750 hours/month (about 31 days)
 - Apps sleep after 15 minutes of inactivity
 - 512MB memory limit
+- No payment method required
+- Automatic SSL certificates
 
 **Heroku:**
 - Apps sleep after 30 minutes of inactivity
@@ -699,18 +716,30 @@ app.get('/api/users/:id', (req, res) => {
 
 #### 1. App Sleeping/Cold Starts
 
-**Problem:** Free tier apps sleep after inactivity
+**Problem:** Free tier apps sleep after inactivity (Render: 15 minutes, Heroku: 30 minutes)
 **Solution:**
 ```javascript
 // Add to frontend
 useEffect(() => {
-  // Ping backend every 25 minutes
+  // Ping backend every 14 minutes for Render (or 25 minutes for Heroku)
   const interval = setInterval(() => {
     fetch(`${import.meta.env.VITE_API_URL}/health`);
-  }, 25 * 60 * 1000);
+  }, 14 * 60 * 1000); // 14 minutes for Render
   
   return () => clearInterval(interval);
 }, []);
+```
+
+**Render-specific solution:**
+```javascript
+// Add keep-alive endpoint in your backend
+app.get('/keep-alive', (req, res) => {
+  res.json({ 
+    status: 'alive', 
+    timestamp: new Date(),
+    uptime: process.uptime()
+  });
+});
 ```
 
 #### 2. CORS Issues
@@ -779,21 +808,61 @@ node --version
 npm --version
 ```
 
+#### 6. Render-Specific Issues
+
+**Problem:** "Missing script: start" error
+**Solution:**
+```json
+// Ensure package.json has start script
+{
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  }
+}
+```
+
+**Problem:** Port binding issues on Render
+**Solution:**
+```javascript
+// Use Render's PORT environment variable
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});
+```
+
+**Problem:** Build command fails
+**Solution:**
+```bash
+# In Render dashboard, set:
+# Build Command: npm install --production
+# Start Command: npm start
+# Or use: node src/server.js
+```
+
 ### Debugging Tips
 
 1. **Check Logs:**
 ```bash
-# Railway
-railway logs
-
 # Render
-# Check logs in dashboard
+# Go to https://dashboard.render.com
+# Click on your service → Logs tab
+# Or use Render CLI: render logs --service=your-service-name
 
 # Heroku
 heroku logs --tail
 
 # Vercel
 vercel logs
+```
+
+2. **Render-Specific Debugging:**
+```bash
+# Check build logs in Render dashboard
+# Go to your service → Events tab to see deployment history
+# Check Environment Variables tab to verify all variables are set
+# Use the Shell tab to access your running container for debugging
 ```
 
 2. **Test API Endpoints:**
@@ -839,7 +908,7 @@ Before going live:
 **Total: $0/month**
 
 **Potential Upgrade Costs (when you outgrow free tiers):**
-- Railway Pro: $5/month
+- Render Pro: $7/month (for more resources and no sleeping)
 - MongoDB Atlas M10: $9/month
 - Redis Labs: $5/month
 - Custom domain: $10-15/year
