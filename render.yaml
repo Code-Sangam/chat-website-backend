@@ -2,7 +2,7 @@ services:
   - type: web
     name: chat-website-backend
     env: node
-    buildCommand: npm install
+    buildCommand: npm ci --only=production && npm rebuild bcrypt --build-from-source
     startCommand: npm start
     plan: free
     envVars:
