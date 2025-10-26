@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Real-time chatting website with user authentication and search",
   "main": "index.js",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "cd frontend && npm run dev",

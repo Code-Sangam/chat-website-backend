@@ -16,6 +16,8 @@ yarn-error.log*
 /frontend/build
 /backend/dist
 /backend/build
+dist/
+build/
 
 # Logs
 logs
@@ -67,7 +69,6 @@ jspm_packages/
 
 # Nuxt.js build / generate output
 .nuxt
-dist
 
 # Storybook build outputs
 .out
