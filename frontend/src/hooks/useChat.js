@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSocket } from '../contexts/SocketContext';
 import { useAuth } from '../contexts/AuthContext';
-import api from '../services/api';
+import { chatService } from '../services/chatService';
 
 export const useChat = (chatId, selectedUser) => {
   const [messages, setMessages] = useState([]);
@@ -30,12 +30,12 @@ export const useChat = (chatId, selectedUser) => {
     messagesLoadedRef.current = false;
 
     try {
-      const response = await api.get(`/chats/${chatId}/messages`);
+      const response = await chatService.getChatMessages(chatId);
       
-      if (response.data.success) {
+      if (response.success) {
         const apiMessages = (response.data.messages || []).map(msg => ({
           ...msg,
-          isOwn: msg.sender?.uniqueUserId === getCurrentUserId() // You'll need to implement this
+          isOwn: msg.sender?.uniqueUserId === getCurrentUserId()
         }));
         setMessages(apiMessages);
         messagesLoadedRef.current = true;

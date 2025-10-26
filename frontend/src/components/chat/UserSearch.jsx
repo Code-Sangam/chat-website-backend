@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useSocket } from '../../contexts/SocketContext';
 import UserStatus from './UserStatus';
+import { chatService } from '../../services/chatService';
 import api from '../../services/api';
 
 const SearchContainer = styled.div`
@@ -173,16 +174,37 @@ const UserSearch = ({ onUserSelect }) => {
   };
 
   const handleUserClick = async (user) => {
+    setLoading(true);
+    setError('');
+    
     try {
-      // Create or get existing chat with this user using MongoDB ObjectId
-      const response = await api.get(`/chats/with/${user._id}`);
+      console.log('Starting chat with user:', user);
       
-      if (response.data.success) {
+      // Create or get existing chat with this user using the chat service
+      const response = await chatService.createOrGetChat(user._id);
+      
+      if (response.success && response.data.chat) {
+        console.log('Chat created successfully:', response.data.chat);
         onUserSelect(user, response.data.chat._id);
+        setError(''); // Clear any previous errors
+      } else {
+        throw new Error('Invalid response from server');
       }
     } catch (err) {
       console.error('Chat creation error:', err);
-      setError('Failed to start chat. Please try again.');
+      
+      // Provide more specific error messages
+      if (err.isTimeoutError) {
+        setError('Connection timeout. The server may be restarting. Please try again in a moment.');
+      } else if (err.response?.status === 404) {
+        setError('User not found. Please check the user ID and try again.');
+      } else if (err.response?.status === 401) {
+        setError('Please sign in again to start a chat.');
+      } else {
+        setError('Failed to start chat. Please try again in a moment.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
