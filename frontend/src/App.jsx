@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { SocketProvider } from './contexts/SocketContext';
@@ -10,6 +10,7 @@ import SessionManager from './components/common/SessionManager';
 import NotificationContainer from './components/common/NotificationContainer';
 import NetworkStatus from './components/common/NetworkStatus';
 import GlobalErrorHandler from './components/common/GlobalErrorHandler';
+import { backendWarmer } from './utils/backendWarmer';
 
 // Pages
 import SignupPage from './pages/SignupPage';
@@ -18,6 +19,13 @@ import ChatPage from './pages/ChatPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
+  // Warm up backend on app start
+  useEffect(() => {
+    backendWarmer.autoWarm().catch(error => {
+      console.warn('Backend auto-warming failed:', error.message);
+    });
+  }, []);
+
   return (
     <ErrorBoundary>
       <Router>
