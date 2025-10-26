@@ -1,0 +1,81 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { SocketProvider } from './contexts/SocketContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import PublicRoute from './components/common/PublicRoute';
+import ErrorBoundary from './components/common/ErrorBoundary';
+import SessionManager from './components/common/SessionManager';
+import NotificationContainer from './components/common/NotificationContainer';
+import NetworkStatus from './components/common/NetworkStatus';
+import GlobalErrorHandler from './components/common/GlobalErrorHandler';
+
+// Pages
+import SignupPage from './pages/SignupPage';
+import SigninPage from './pages/SigninPage';
+import ChatPage from './pages/ChatPage';
+import NotFoundPage from './pages/NotFoundPage';
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <Router>
+        <NotificationProvider>
+          <AuthProvider>
+            <GlobalErrorHandler />
+            <SessionManager>
+              <div className="app">
+                <NetworkStatus />
+                <NotificationContainer />
+                
+                <Routes>
+                  {/* Public routes - only accessible when not authenticated */}
+                  <Route 
+                    path="/signup" 
+                    element={
+                      <PublicRoute>
+                        <SignupPage />
+                      </PublicRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/signin" 
+                    element={
+                      <PublicRoute>
+                        <SigninPage />
+                      </PublicRoute>
+                    } 
+                  />
+                  
+                  {/* Protected routes - only accessible when authenticated */}
+                  <Route 
+                    path="/chat" 
+                    element={
+                      <ProtectedRoute>
+                        <SocketProvider>
+                          <ChatPage />
+                        </SocketProvider>
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  {/* Redirect root to appropriate page */}
+                  <Route 
+                    path="/" 
+                    element={<Navigate to="/chat" replace />} 
+                  />
+                  
+                  {/* 404 page */}
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </div>
+            </SessionManager>
+          </AuthProvider>
+        </NotificationProvider>
+      </Router>
+    </ErrorBoundary>
+  );
+}
+
+export default App;
