@@ -1,12 +1,18 @@
 import axios from 'axios';
 
-// Create axios instance
+// Create axios instance with enhanced CORS configuration
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
   timeout: 30000, // Increased to 30 seconds for Render free tier
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest'
+  },
+  withCredentials: false, // Set to false for now to avoid CORS issues
+  // Add retry configuration
+  retry: 3,
+  retryDelay: 1000
 });
 
 import { tokenManager } from '../utils/tokenManager';
@@ -25,12 +31,31 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle errors
+// Response interceptor to handle errors with retry logic
 api.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error) => {
+  async (error) => {
+    const config = error.config;
+    
+    // Handle CORS and network errors with retry
+    if ((!error.response || error.code === 'ERR_NETWORK') && config && !config.__isRetryRequest) {
+      config.__retryCount = config.__retryCount || 0;
+      
+      if (config.__retryCount < (config.retry || 3)) {
+        config.__retryCount++;
+        config.__isRetryRequest = true;
+        
+        console.log(`Retrying request ${config.__retryCount}/${config.retry || 3}: ${config.method?.toUpperCase()} ${config.url}`);
+        
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, config.retryDelay || 1000));
+        
+        return api(config);
+      }
+    }
+    
     // Handle token expiration
     if (error.response?.status === 401) {
       const errorCode = error.response?.data?.error?.code;
@@ -62,10 +87,16 @@ api.interceptors.response.use(
       error.message = 'Network error. Please check your connection and try again.';
     }
     
-    // Handle timeout errors with retry logic
+    // Handle timeout errors
     if (error.code === 'ECONNABORTED') {
       error.isTimeoutError = true;
       error.message = 'Request timed out. The server may be restarting. Please wait a moment and try again.';
+    }
+    
+    // Handle CORS errors specifically
+    if (error.code === 'ERR_NETWORK' && !error.response) {
+      error.isCORSError = true;
+      error.message = 'Connection blocked. The server may be starting up. Please wait a moment and try again.';
     }
     
     // Add error metadata

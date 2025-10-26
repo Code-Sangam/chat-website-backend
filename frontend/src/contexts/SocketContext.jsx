@@ -163,11 +163,25 @@ export const SocketProvider = ({ children }) => {
 
     const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
     
+    console.log('Connecting to socket:', socketUrl);
+    
     socketRef.current = io(socketUrl, {
       auth: {
         token
       },
-      transports: ['websocket', 'polling']
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+      forceNew: true,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
+      maxReconnectionAttempts: 5,
+      // Enhanced CORS and connection options
+      withCredentials: false,
+      extraHeaders: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
     });
 
     // Connection events
