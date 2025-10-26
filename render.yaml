@@ -15,5 +15,5 @@ services:
       - key: JWT_SECRET
         value: super-secure-jwt-secret-key-for-production-2024
       - key: FRONTEND_URL
-        value: https://chat-website-frontend-jyxmuwspi-manualuser206-8672s-projects.vercel.app
+        value: https://chat-website-frontend-2hyawio1f-manualuser206-8672s-projects.vercel.app
     healthCheckPath: /health

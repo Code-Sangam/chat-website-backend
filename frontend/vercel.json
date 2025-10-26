@@ -10,8 +10,8 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "https://chat-website-backend.onrender.com/api",
-    "VITE_SOCKET_URL": "https://chat-website-backend.onrender.com",
+    "VITE_API_URL": "https://chat-website-backend-3d1p.onrender.com/api",
+    "VITE_SOCKET_URL": "https://chat-website-backend-3d1p.onrender.com",
     "VITE_NODE_ENV": "production"
   }
 }
