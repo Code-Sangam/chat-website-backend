@@ -3,7 +3,7 @@ services:
     name: chat-website-backend
     env: node
     buildCommand: npm run build
-    startCommand: npm start
+    startCommand: node --max-old-space-size=256 backend/src/server.js
     plan: free
     envVars:
       - key: NODE_ENV
