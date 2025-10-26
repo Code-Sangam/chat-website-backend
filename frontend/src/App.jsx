@@ -29,46 +29,46 @@ function App() {
                 <NetworkStatus />
                 <NotificationContainer />
                 
-                <Routes>
-                  {/* Public routes - only accessible when not authenticated */}
-                  <Route 
-                    path="/signup" 
-                    element={
-                      <PublicRoute>
-                        <SignupPage />
-                      </PublicRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/signin" 
-                    element={
-                      <PublicRoute>
-                        <SigninPage />
-                      </PublicRoute>
-                    } 
-                  />
-                  
-                  {/* Protected routes - only accessible when authenticated */}
-                  <Route 
-                    path="/chat" 
-                    element={
-                      <ProtectedRoute>
-                        <SocketProvider>
+                <SocketProvider>
+                  <Routes>
+                    {/* Public routes - only accessible when not authenticated */}
+                    <Route 
+                      path="/signup" 
+                      element={
+                        <PublicRoute>
+                          <SignupPage />
+                        </PublicRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/signin" 
+                      element={
+                        <PublicRoute>
+                          <SigninPage />
+                        </PublicRoute>
+                      } 
+                    />
+                    
+                    {/* Protected routes - only accessible when authenticated */}
+                    <Route 
+                      path="/chat" 
+                      element={
+                        <ProtectedRoute>
                           <ChatPage />
-                        </SocketProvider>
-                      </ProtectedRoute>
-                    } 
-                  />
-                  
-                  {/* Redirect root to appropriate page */}
-                  <Route 
-                    path="/" 
-                    element={<Navigate to="/chat" replace />} 
-                  />
-                  
-                  {/* 404 page */}
-                  <Route path="*" element={<NotFoundPage />} />
-                </Routes>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
+                    {/* Redirect root to appropriate page */}
+                    <Route 
+                      path="/" 
+                      element={<Navigate to="/signin" replace />} 
+                    />
+                    
+                    {/* 404 page */}
+                    <Route path="*" element={<NotFoundPage />} />
+                  </Routes>
+                </SocketProvider>
               </div>
             </SessionManager>
           </AuthProvider>
