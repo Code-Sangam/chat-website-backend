@@ -47,7 +47,10 @@ app.options('*', cors(corsOptions));
 
 // Connect to database (skip in tests as tests handle their own connections)
 if (process.env.NODE_ENV !== 'test') {
-  connectDB();
+  console.log('🚀 Starting database connection...');
+  connectDB().catch(error => {
+    console.error('💥 Database connection failed during startup:', error.message);
+  });
 }
 
 // Import security middleware
@@ -105,14 +108,44 @@ app.use('/api', apiLimiter);
 // Global input sanitization for API routes
 app.use('/api', sanitizeInput);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Server is running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
+// Health check endpoint with detailed diagnostics
+app.get('/health', async (req, res) => {
+  console.log('🏥 Health check requested');
+  
+  try {
+    const mongoose = require('mongoose');
+    const dbStatus = mongoose.connection.readyState;
+    const dbStates = {
+      0: 'disconnected',
+      1: 'connected',
+      2: 'connecting',
+      3: 'disconnecting'
+    };
+
+    const healthData = {
+      success: true,
+      message: 'Server is running',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      database: {
+        status: dbStates[dbStatus] || 'unknown',
+        readyState: dbStatus
+      },
+      memory: process.memoryUsage(),
+      uptime: process.uptime()
+    };
+
+    console.log('✅ Health check successful:', healthData);
+    res.json(healthData);
+  } catch (error) {
+    console.error('❌ Health check error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Health check failed',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // API routes
