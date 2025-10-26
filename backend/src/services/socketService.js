@@ -12,38 +12,19 @@ class SocketService {
   }
 
   initialize(server) {
-    // Allow Vercel deployments and localhost for Socket.io
-    const allowedOrigins = [
-      process.env.FRONTEND_URL,
-      'http://localhost:3000',
-      'https://localhost:3000'
-    ];
+    console.log('🚨 EMERGENCY Socket.io CORS: Allowing all origins for immediate functionality');
 
     this.io = new Server(server, {
       cors: {
-        origin: (origin, callback) => {
-          // Allow requests with no origin
-          if (!origin) return callback(null, true);
-          
-          // Check if origin is in allowed list
-          if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-          }
-          
-          // Allow Vercel preview deployments
-          if (origin.includes('chat-website-frontend') && origin.includes('vercel.app')) {
-            return callback(null, true);
-          }
-          
-          // Reject other origins
-          callback(new Error('Not allowed by CORS'));
-        },
+        origin: true, // Allow all origins temporarily
         methods: ["GET", "POST"],
-        credentials: true
+        credentials: true,
+        allowedHeaders: ["*"]
       },
       transports: ['websocket', 'polling'],
       pingTimeout: 60000,
-      pingInterval: 25000
+      pingInterval: 25000,
+      allowEIO3: true
     });
 
     // Apply authentication middleware
