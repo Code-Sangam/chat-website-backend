@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Backend Test</title>
+</head>
+<body>
+    <h1>Backend Connection Test</h1>
+    <button onclick="testHealth()">Test Health Endpoint</button>
+    <button onclick="testCORS()">Test CORS</button>
+    <div id="results"></div>
+
+    <script>
+        const BACKEND_URL = 'https://chat-website-backend-3d1p.onrender.com';
+        
+        async function testHealth() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>Testing health endpoint...</p>';
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/health`);
+                const data = await response.json();
+                results.innerHTML += `<p>✅ Health check successful: ${JSON.stringify(data)}</p>`;
+            } catch (error) {
+                results.innerHTML += `<p>❌ Health check failed: ${error.message}</p>`;
+            }
+        }
+        
+        async function testCORS() {
+            const results = document.getElementById('results');
+            results.innerHTML += '<p>Testing CORS with signin endpoint...</p>';
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/auth/signin`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'test',
+                        password: 'test'
+                    })
+                });
+                
+                const data = await response.json();
+                results.innerHTML += `<p>✅ CORS test successful (even if auth failed): ${JSON.stringify(data)}</p>`;
+            } catch (error) {
+                results.innerHTML += `<p>❌ CORS test failed: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

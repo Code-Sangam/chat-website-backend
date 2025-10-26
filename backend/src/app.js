@@ -13,6 +13,38 @@ const messageRoutes = require('./routes/messages');
 
 const app = express();
 
+// 🚨 EMERGENCY CORS FIX - APPLY FIRST BEFORE ANY OTHER MIDDLEWARE
+console.log('🚨 EMERGENCY CORS: Allowing all origins - applied FIRST');
+
+// Manual CORS headers - applied immediately
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  console.log(`CORS headers set for ${req.method} ${req.url} from origin: ${req.headers.origin}`);
+  
+  if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS preflight request');
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+// CORS middleware as backup
+const corsOptions = {
+  origin: true, // Allow all origins
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  optionsSuccessStatus: 200,
+  preflightContinue: false
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
 // Connect to database (skip in tests as tests handle their own connections)
 if (process.env.NODE_ENV !== 'test') {
   connectDB();
@@ -26,7 +58,7 @@ const {
   securityHeaders 
 } = require('./middleware/security');
 
-// Security middleware
+// Security middleware - AFTER CORS
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
   contentSecurityPolicy: {
@@ -44,8 +76,16 @@ app.use(helmet({
   },
 }));
 
-// Additional security headers
-app.use(securityHeaders);
+// Additional security headers - but don't override CORS
+app.use((req, res, next) => {
+  // Only apply non-CORS security headers
+  if (!res.headersSent) {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+  }
+  next();
+});
 
 // Request logging (only in development)
 if (process.env.NODE_ENV !== 'production') {
@@ -54,38 +94,6 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Request size limiting
 app.use(requestSizeLimiter);
-
-// 🚨 EMERGENCY CORS FIX - ALLOW ALL ORIGINS TEMPORARILY
-console.log('🚨 EMERGENCY CORS: Allowing all origins for immediate functionality');
-
-const corsOptions = {
-  origin: true, // Allow all origins temporarily
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  optionsSuccessStatus: 200,
-  preflightContinue: false
-};
-
-// Apply CORS before any other middleware
-app.use(cors(corsOptions));
-
-// Handle preflight requests explicitly
-app.options('*', cors(corsOptions));
-
-// Add manual CORS headers as backup
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-  } else {
-    next();
-  }
-});
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
