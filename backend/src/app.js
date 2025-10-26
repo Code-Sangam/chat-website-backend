@@ -55,13 +55,39 @@ if (process.env.NODE_ENV !== 'production') {
 // Request size limiting
 app.use(requestSizeLimiter);
 
-// CORS configuration
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+// CORS configuration - Allow Vercel deployments and localhost
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:3000',
+  'https://localhost:3000'
+];
+
+// Add pattern matching for Vercel deployments
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Allow Vercel preview deployments
+    if (origin.includes('chat-website-frontend') && origin.includes('vercel.app')) {
+      return callback(null, true);
+    }
+    
+    // Reject other origins
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200 // For legacy browser support
+};
+
+app.use(cors(corsOptions));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
