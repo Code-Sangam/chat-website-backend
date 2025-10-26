@@ -13,6 +13,9 @@ const messageRoutes = require('./routes/messages');
 
 const app = express();
 
+// Trust proxy for Render deployment (fixes rate limiter issues)
+app.set('trust proxy', 1);
+
 // 🚨 EMERGENCY CORS FIX - APPLY FIRST BEFORE ANY OTHER MIDDLEWARE
 console.log('🚨 EMERGENCY CORS: Allowing all origins - applied FIRST');
 
@@ -61,23 +64,27 @@ const {
   securityHeaders 
 } = require('./middleware/security');
 
-// Security middleware - AFTER CORS
-app.use(helmet({
-  crossOriginEmbedderPolicy: false,
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "ws:", "wss:"],
-      fontSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      frameSrc: ["'none'"],
+// Minimal security middleware to reduce memory usage
+if (process.env.NODE_ENV !== 'production') {
+  app.use(helmet({
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'", "ws:", "wss:"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+      },
     },
-  },
-}));
+  }));
+} else {
+  console.log('⚠️ Helmet disabled in production to reduce memory usage');
+}
 
 // Additional security headers - but don't override CORS
 app.use((req, res, next) => {
@@ -102,11 +109,19 @@ app.use(requestSizeLimiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Apply rate limiting to all API routes
-app.use('/api', apiLimiter);
+// Temporarily disable rate limiting to prevent memory issues
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api', apiLimiter);
+} else {
+  console.log('⚠️ Rate limiting disabled in production to prevent memory issues');
+}
 
-// Global input sanitization for API routes
-app.use('/api', sanitizeInput);
+// Temporarily disable input sanitization to reduce memory usage
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api', sanitizeInput);
+} else {
+  console.log('⚠️ Input sanitization disabled in production to reduce memory usage');
+}
 
 // Health check endpoint with detailed diagnostics
 app.get('/health', async (req, res) => {

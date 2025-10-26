@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js",
+    "start": "node --max-old-space-size=200 --expose-gc src/server.js",
     "build": "echo 'Build completed'",
     "postinstall": "npm rebuild bcrypt --build-from-source",
     "test": "jest --runInBand",
