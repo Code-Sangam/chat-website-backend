@@ -4,6 +4,25 @@ const socketService = require('./services/socketService');
 
 const PORT = process.env.PORT || 5000;
 
+// Memory optimization for free tier
+if (process.env.NODE_ENV === 'production') {
+  // Force garbage collection every 30 seconds
+  setInterval(() => {
+    if (global.gc) {
+      global.gc();
+    }
+  }, 30000);
+  
+  // Monitor memory usage
+  setInterval(() => {
+    const memUsage = process.memoryUsage();
+    const memUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
+    if (memUsedMB > 200) {
+      console.log(`Memory usage: ${memUsedMB}MB - High memory usage detected`);
+    }
+  }, 60000);
+}
+
 // Create HTTP server
 const server = http.createServer(app);
 

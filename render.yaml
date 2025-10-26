@@ -3,7 +3,7 @@ services:
     name: chat-website-backend
     env: node
     buildCommand: npm run build
-    startCommand: node --max-old-space-size=256 backend/src/server.js
+    startCommand: node --max-old-space-size=200 --expose-gc backend/src/server.js
     plan: free
     envVars:
       - key: NODE_ENV
@@ -15,5 +15,5 @@ services:
       - key: JWT_SECRET
         value: super-secure-jwt-secret-key-for-production-2024
       - key: FRONTEND_URL
-        value: https://chat-website-frontend-2hyawio1f-manualuser206-8672s-projects.vercel.app
+        value: https://chat-website-frontend-hojrznaia-manualuser206-8672s-projects.vercel.app
     healthCheckPath: /health

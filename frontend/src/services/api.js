@@ -3,7 +3,7 @@ import axios from 'axios';
 // Create axios instance
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-  timeout: 10000,
+  timeout: 30000, // Increased to 30 seconds for Render free tier
   headers: {
     'Content-Type': 'application/json'
   }
@@ -62,10 +62,10 @@ api.interceptors.response.use(
       error.message = 'Network error. Please check your connection and try again.';
     }
     
-    // Handle timeout errors
+    // Handle timeout errors with retry logic
     if (error.code === 'ECONNABORTED') {
       error.isTimeoutError = true;
-      error.message = 'Request timed out. Please try again.';
+      error.message = 'Request timed out. The server may be restarting. Please wait a moment and try again.';
     }
     
     // Add error metadata
