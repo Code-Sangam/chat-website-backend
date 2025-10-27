@@ -16,37 +16,23 @@ const app = express();
 // Trust proxy for Render deployment (fixes rate limiter issues)
 app.set('trust proxy', 1);
 
-// 🚨 EMERGENCY CORS FIX - APPLY FIRST BEFORE ANY OTHER MIDDLEWARE
-console.log('🚨 EMERGENCY CORS: Allowing all origins - applied FIRST');
+// 🚨 SIMPLIFIED CORS FOR RAILWAY DEPLOYMENT
+console.log('🚀 Railway CORS: Optimized for Railway deployment');
 
-// Manual CORS headers - applied immediately
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  
-  console.log(`CORS headers set for ${req.method} ${req.url} from origin: ${req.headers.origin}`);
-  
-  if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS preflight request');
-    return res.sendStatus(200);
-  }
-  next();
-});
-
-// CORS middleware as backup
+// Simplified CORS configuration
 const corsOptions = {
-  origin: true, // Allow all origins
+  origin: [
+    'https://chat-website-frontend-e3an3wwht-manualuser206-8672s-projects.vercel.app',
+    'http://localhost:3000',
+    'https://localhost:3000'
+  ],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  optionsSuccessStatus: 200,
-  preflightContinue: false
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
 
 // Connect to database (skip in tests as tests handle their own connections)
 if (process.env.NODE_ENV !== 'test') {
