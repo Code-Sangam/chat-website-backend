@@ -16,8 +16,8 @@ const app = express();
 // Trust proxy for Render deployment (fixes rate limiter issues)
 app.set('trust proxy', 1);
 
-// 🚨 SIMPLIFIED CORS FOR RAILWAY DEPLOYMENT
-console.log('🚀 Railway CORS: Optimized for Railway deployment');
+// 🚨 SIMPLIFIED CORS FOR CYCLIC DEPLOYMENT
+console.log('🚀 Cyclic CORS: Optimized for Cyclic deployment');
 
 // Simplified CORS configuration
 const corsOptions = {
