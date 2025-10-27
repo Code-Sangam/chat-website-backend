@@ -1,83 +1,114 @@
-import api from './api';
+// Firebase real-time chat service (replaces Socket.io)
+import { 
+  collection, 
+  addDoc, 
+  query, 
+  orderBy, 
+  onSnapshot, 
+  serverTimestamp,
+  where,
+  getDocs,
+  doc,
+  getDoc
+} from 'firebase/firestore';
+import { db } from './firebase';
 
-// Retry helper function for chat operations
-const retryRequest = async (requestFn, maxRetries = 3, delay = 1500) => {
-  for (let i = 0; i <= maxRetries; i++) {
+class ChatService {
+  constructor() {
+    this.messageListeners = new Map();
+  }
+
+  // Send a message to a chat
+  async sendMessage(chatId, senderId, content) {
     try {
-      return await requestFn();
+      const messagesRef = collection(db, 'chats', chatId, 'messages');
+      await addDoc(messagesRef, {
+        senderId,
+        content,
+        timestamp: serverTimestamp(),
+        chatId
+      });
     } catch (error) {
-      console.log(`Chat request attempt ${i + 1} failed:`, error.message);
-      
-      // Don't retry on client errors (4xx) except 408 (timeout)
-      if (error.response && error.response.status >= 400 && error.response.status < 500 && error.response.status !== 408) {
-        throw error;
-      }
-      
-      // Don't retry on last attempt
-      if (i === maxRetries) {
-        throw error;
-      }
-      
-      // Wait before retry with exponential backoff
-      await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+      console.error('Error sending message:', error);
+      throw error;
     }
   }
-};
 
-export const chatService = {
-  // Create or get existing chat with another user
-  createOrGetChat: async (otherUserId) => {
-    return retryRequest(async () => {
-      console.log(`Creating chat with user: ${otherUserId}`);
-      const response = await api.get(`/chats/with/${otherUserId}`);
-      console.log('Chat creation response:', response.data);
-      return response.data;
-    });
-  },
+  // Listen to messages in a chat (real-time)
+  subscribeToMessages(chatId, callback) {
+    const messagesRef = collection(db, 'chats', chatId, 'messages');
+    const q = query(messagesRef, orderBy('timestamp', 'asc'));
 
-  // Get all user chats
-  getUserChats: async (limit = 20, skip = 0) => {
-    return retryRequest(async () => {
-      const response = await api.get(`/chats?limit=${limit}&skip=${skip}`);
-      return response.data;
-    });
-  },
-
-  // Get chat by ID
-  getChatById: async (chatId) => {
-    return retryRequest(async () => {
-      const response = await api.get(`/chats/${chatId}`);
-      return response.data;
-    });
-  },
-
-  // Get chat messages
-  getChatMessages: async (chatId, limit = 50, skip = 0) => {
-    return retryRequest(async () => {
-      const response = await api.get(`/chats/${chatId}/messages?limit=${limit}&skip=${skip}`);
-      return response.data;
-    });
-  },
-
-  // Send message to chat
-  sendMessage: async (chatId, content, messageType = 'text', replyToId = null) => {
-    return retryRequest(async () => {
-      const response = await api.post(`/chats/${chatId}/messages`, {
-        content,
-        messageType,
-        replyToId
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const messages = [];
+      snapshot.forEach((doc) => {
+        messages.push({
+          id: doc.id,
+          ...doc.data()
+        });
       });
-      return response.data;
+      callback(messages);
     });
-  },
 
-  // Mark messages as read
-  markMessagesAsRead: async (chatId, messageIds = null) => {
-    return retryRequest(async () => {
-      const response = await api.put(`/chats/${chatId}/read`, {
-        messageIds
-      });
-      return response.data;
-    });
+    this.messageListeners.set(chatId, unsubscribe);
+    return unsubscribe;
   }
-};
+
+  // Stop listening to messages
+  unsubscribeFromMessages(chatId) {
+    const unsubscribe = this.messageListeners.get(chatId);
+    if (unsubscribe) {
+      unsubscribe();
+      this.messageListeners.delete(chatId);
+    }
+  }
+
+  // Get user's chats
+  async getUserChats(userId) {
+    try {
+      const chatsRef = collection(db, 'chats');
+      const q = query(chatsRef, where('participants', 'array-contains', userId));
+      const snapshot = await getDocs(q);
+      
+      const chats = [];
+      for (const docSnap of snapshot.docs) {
+        const chatData = docSnap.data();
+        
+        // Get participant details
+        const participants = [];
+        for (const participantId of chatData.participants) {
+          if (participantId !== userId) {
+            const userDoc = await getDoc(doc(db, 'users', participantId));
+            if (userDoc.exists()) {
+              participants.push({
+                id: participantId,
+                ...userDoc.data()
+              });
+            }
+          }
+        }
+
+        chats.push({
+          id: docSnap.id,
+          ...chatData,
+          otherParticipants: participants
+        });
+      }
+
+      return chats;
+    } catch (error) {
+      console.error('Error getting user chats:', error);
+      throw error;
+    }
+  }
+
+  // Clean up all listeners
+  cleanup() {
+    this.messageListeners.forEach((unsubscribe) => {
+      unsubscribe();
+    });
+    this.messageListeners.clear();
+  }
+}
+
+export default new ChatService();
