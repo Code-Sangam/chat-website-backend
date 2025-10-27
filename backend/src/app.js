@@ -16,10 +16,10 @@ const app = express();
 // Trust proxy for Render deployment (fixes rate limiter issues)
 app.set('trust proxy', 1);
 
-// 🚨 SIMPLIFIED CORS FOR CYCLIC DEPLOYMENT
-console.log('🚀 Cyclic CORS: Optimized for Cyclic deployment');
+// 🚨 RENDER-OPTIMIZED CORS CONFIGURATION
+console.log('🚀 Railway CORS: Optimized for Railway with Socket.io support');
 
-// Simplified CORS configuration
+// Railway-friendly CORS configuration
 const corsOptions = {
   origin: [
     'https://chat-website-frontend-e3an3wwht-manualuser206-8672s-projects.vercel.app',
@@ -50,64 +50,21 @@ const {
   securityHeaders 
 } = require('./middleware/security');
 
-// Minimal security middleware to reduce memory usage
-if (process.env.NODE_ENV !== 'production') {
-  app.use(helmet({
-    crossOriginEmbedderPolicy: false,
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'", "ws:", "wss:"],
-        fontSrc: ["'self'"],
-        objectSrc: ["'none'"],
-        mediaSrc: ["'self'"],
-        frameSrc: ["'none'"],
-      },
-    },
-  }));
-} else {
-  console.log('⚠️ Helmet disabled in production to reduce memory usage');
-}
+// RENDER OPTIMIZATION: Remove ALL heavy middleware
+console.log('⚠️ All security middleware disabled for Render memory optimization');
 
-// Additional security headers - but don't override CORS
-app.use((req, res, next) => {
-  // Only apply non-CORS security headers
-  if (!res.headersSent) {
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('X-XSS-Protection', '1; mode=block');
-  }
-  next();
-});
-
-// Request logging (only in development)
-if (process.env.NODE_ENV !== 'production') {
-  app.use(requestLogger);
-}
-
-// Request size limiting
-app.use(requestSizeLimiter);
+// RENDER OPTIMIZATION: Remove all non-essential middleware
+console.log('⚠️ Security headers, logging, and size limiting disabled for Render optimization');
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Temporarily disable rate limiting to prevent memory issues
-if (process.env.NODE_ENV !== 'production') {
-  app.use('/api', apiLimiter);
-} else {
-  console.log('⚠️ Rate limiting disabled in production to prevent memory issues');
-}
+// RENDER OPTIMIZATION: Disable ALL memory-heavy middleware
+console.log('🔧 RENDER OPTIMIZATION: Disabling memory-heavy middleware for Render free tier');
 
-// Temporarily disable input sanitization to reduce memory usage
-if (process.env.NODE_ENV !== 'production') {
-  app.use('/api', sanitizeInput);
-} else {
-  console.log('⚠️ Input sanitization disabled in production to reduce memory usage');
-}
+// RENDER OPTIMIZATION: All middleware disabled
+console.log('⚠️ Input sanitization disabled for Render memory optimization');
 
 // Health check endpoint with detailed diagnostics
 app.get('/health', async (req, res) => {

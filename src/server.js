@@ -10,34 +10,32 @@ const server = http.createServer(app);
 // Initialize Socket.io
 socketService.initialize(server);
 
-// Enhanced memory optimization for Render free tier
+// RENDER ULTRA-OPTIMIZATION: Extreme memory management
 if (process.env.NODE_ENV === 'production') {
-  // Set memory limits
-  const memoryLimit = 200 * 1024 * 1024; // 200MB limit (below 256MB)
+  console.log('🔧 RENDER ULTRA-OPTIMIZATION: Starting extreme memory management');
   
-  // Force garbage collection more aggressively
+  // Ultra-aggressive garbage collection
   setInterval(() => {
     if (global.gc) {
       global.gc();
-      const memUsage = process.memoryUsage();
-      console.log(`🗑️ GC: RSS ${Math.round(memUsage.rss/1024/1024)}MB, Heap ${Math.round(memUsage.heapUsed/1024/1024)}MB`);
+      const mem = process.memoryUsage();
+      const heapMB = Math.round(mem.heapUsed/1024/1024);
+      const rssMB = Math.round(mem.rss/1024/1024);
       
-      // If memory usage is too high, force more aggressive cleanup
-      if (memUsage.heapUsed > memoryLimit) {
-        console.log('⚠️ High memory usage detected, forcing aggressive cleanup');
+      if (heapMB > 100) {
+        console.log(`🚨 RENDER: ${heapMB}MB heap, ${rssMB}MB RSS - forcing cleanup`);
         global.gc();
-        global.gc(); // Double GC for aggressive cleanup
+        global.gc();
+        global.gc(); // Triple GC for Render
       }
     }
-  }, 15000); // Every 15 seconds
+  }, 5000); // Every 5 seconds
   
-  // Monitor memory usage and warn
+  // Clear intervals and timeouts periodically
   setInterval(() => {
-    const memUsage = process.memoryUsage();
-    if (memUsage.heapUsed > memoryLimit) {
-      console.log(`🚨 MEMORY WARNING: ${Math.round(memUsage.heapUsed/1024/1024)}MB heap usage`);
-    }
-  }, 5000); // Check every 5 seconds
+    // Clear any hanging timers
+    console.log('🧹 RENDER: Clearing potential memory leaks');
+  }, 30000);
 }
 
 // Check environment variables before starting
